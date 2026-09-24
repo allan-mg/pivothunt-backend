@@ -1,0 +1,24 @@
+{
+  "name": "pivothunt-backend",
+  "version": "1.0.0",
+  "description": "Backend API for PivotHunt, a full-stack job search platform built with Node.js, Express, MongoDB, and JWT authentication.",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/allan-mg/pivothunt-backend.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/allan-mg/pivothunt-backend/issues"
+  },
+  "homepage": "https://github.com/allan-mg/pivothunt-backend#readme",
+  "dependencies": {
+    "express": "^5.2.1",
+    "mongoose": "^9.10.2"
+  }
+}
