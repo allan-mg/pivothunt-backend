@@ -21,6 +21,12 @@ const {
   deleteApplication,
 } = require("./controllers/applications");
 
+const {
+  getSavedJobs,
+  saveJob,
+  deleteSavedJob,
+} = require("./controllers/savedJobs");
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -36,6 +42,11 @@ app.get("/applications", auth, getApplications);
 app.patch("/applications/:applicationId/status", auth, updateApplicationStatus);
 app.patch("/applications/:applicationId/notes", auth, updateApplicationNotes);
 app.delete("/applications/:applicationId", auth, deleteApplication);
+app.get("/saved-jobs", auth, getSavedJobs);
+
+app.post("/saved-jobs", auth, saveJob);
+
+app.delete("/saved-jobs/:jobId", auth, deleteSavedJob);
 
 app.get("/", (req, res) => {
   res.send("PivotHunt API is running");
