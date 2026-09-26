@@ -1,66 +1,72 @@
-require("dotenv").config();
+require('dotenv').config();
 
-const express = require("express");
-const mongoose = require("mongoose");
-const cors = require("cors");
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
+const winston = require('winston');
+const { errors } = require('celebrate');
 
-const auth = require("./middlewares/auth");
+const { mongoUri } = require('./utils/config');
 
-const {
-  createUser,
-  login,
-  getCurrentUser,
-  updateCurrentUser,
-} = require("./controllers/users");
+const routes = require('./routes');
 
-const {
-  createApplication,
-  getApplications,
-  updateApplicationStatus,
-  updateApplicationNotes,
-  deleteApplication,
-} = require("./controllers/applications");
+const { validateSignup, validateSignin } = require('./middlewares/validation');
 
-const {
-  getSavedJobs,
-  saveJob,
-  deleteSavedJob,
-} = require("./controllers/savedJobs");
+const { requestLogger, errorLogger } = require('./middlewares/logger');
+
+const errorHandler = require('./middlewares/error-handler');
+
+const { createUser, login } = require('./controllers/users');
 
 const app = express();
+
+const consoleLogger = winston.createLogger({
+  transports: [new winston.transports.Console()],
+  format: winston.format.simple(),
+});
+
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 app.use(cors());
+app.use(requestLogger);
 
-app.post("/signup", createUser);
-app.post("/signin", login);
-app.get("/users/me", auth, getCurrentUser);
-app.patch("/users/me", auth, updateCurrentUser);
-app.post("/applications", auth, createApplication);
-app.get("/applications", auth, getApplications);
-app.patch("/applications/:applicationId/status", auth, updateApplicationStatus);
-app.patch("/applications/:applicationId/notes", auth, updateApplicationNotes);
-app.delete("/applications/:applicationId", auth, deleteApplication);
-app.get("/saved-jobs", auth, getSavedJobs);
+// PUBLIC AUTH ROUTES
+app.post('/signup', validateSignup, createUser);
 
-app.post("/saved-jobs", auth, saveJob);
+app.post('/signin', validateSignin, login);
 
-app.delete("/saved-jobs/:jobId", auth, deleteSavedJob);
+// API ROUTES
+app.use('/', routes);
 
-app.get("/", (req, res) => {
-  res.send("PivotHunt API is running");
+// TEST ROUTE
+app.get('/', (req, res) => {
+  res.send('PivotHunt API is running');
 });
 
+// 404
+app.use((req, res, next) => {
+  const err = new Error('Requested resource not found');
+  err.statusCode = 404;
+  next(err);
+});
+
+// ERROR HANDLING
+app.use(errorLogger);
+app.use(errors());
+app.use(errorHandler);
+
+// DATABASE
 mongoose
-  .connect(process.env.MONGODB_URI)
+  .connect(mongoUri)
   .then(() => {
-    console.log("Connected to MongoDB");
+    consoleLogger.info('Connected to MongoDB');
   })
   .catch((err) => {
-    console.error("MongoDB connection error:", err);
+    consoleLogger.error(`MongoDB connection error: ${err.message}`);
   });
 
+// SERVER
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  consoleLogger.info(`Server running on port ${PORT}`);
 });
