@@ -1,5 +1,5 @@
-const jwt = require("jsonwebtoken");
-const { jwtSecret } = require("../utils/config");
+const jwt = require('jsonwebtoken');
+const { jwtSecret } = require('../utils/config');
 
 const createError = (statusCode, message) => {
   const error = new Error(message);
@@ -10,11 +10,11 @@ const createError = (statusCode, message) => {
 function auth(req, res, next) {
   const { authorization } = req.headers;
 
-  if (!authorization || !authorization.startsWith("Bearer ")) {
-    return next(createError(401, "Authorization required."));
+  if (!authorization || !authorization.startsWith('Bearer ')) {
+    return next(createError(401, 'Authorization required.'));
   }
 
-  const token = authorization.replace("Bearer ", "");
+  const token = authorization.replace('Bearer ', '');
 
   try {
     const payload = jwt.verify(token, jwtSecret);
@@ -23,7 +23,7 @@ function auth(req, res, next) {
 
     return next();
   } catch (err) {
-    return next(createError(401, "Invalid or expired token."));
+    return next(createError(401, 'Invalid or expired token.'));
   }
 }
 
