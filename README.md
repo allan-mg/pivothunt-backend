@@ -126,7 +126,7 @@ error.log
 Log files are ignored by Git.
 Deployment
 Production API URL:
-To be added after deployment
+https://pivothunt-backend.onrender.com
 
 Repository
 https://github.com/allan-mg/pivothunt-backend
