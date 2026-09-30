@@ -1,24 +1,30 @@
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
-const User = require("../models/user");
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const { jwtSecret } = require('../utils/config');
+const User = require('../models/user');
 
-function createUser(req, res) {
-  const { name, email, password, headline, location, avatar, skills } =
-    req.body;
+const createError = (statusCode, message) => {
+  const error = new Error(message);
+  error.statusCode = statusCode;
+  return error;
+};
+
+function createUser(req, res, next) {
+  const {
+    name, email, password, headline, location, avatar, skills,
+  } = req.body;
 
   bcrypt
     .hash(password, 10)
-    .then((hash) =>
-      User.create({
-        name,
-        email,
-        password: hash,
-        headline,
-        location,
-        avatar,
-        skills,
-      }),
-    )
+    .then((hash) => User.create({
+      name,
+      email,
+      password: hash,
+      headline,
+      location,
+      avatar,
+      skills,
+    }))
     .then((user) => {
       res.status(201).send({
         _id: user._id,
@@ -32,65 +38,47 @@ function createUser(req, res) {
     })
     .catch((err) => {
       if (err.code === 11000) {
-        return res.status(409).send({
-          message: "A user with this email already exists.",
-        });
+        return next(createError(409, 'A user with this email already exists.'));
       }
 
-      if (err.name === "ValidationError") {
-        return res.status(400).send({
-          message: "Invalid user data.",
-        });
+      if (err.name === 'ValidationError') {
+        return next(createError(400, 'Invalid user data.'));
       }
 
-      return res.status(500).send({
-        message: "An error occurred while creating the user.",
-      });
+      return next(err);
     });
 }
 
-function login(req, res) {
+function login(req, res, next) {
   const { email, password } = req.body;
 
   User.findOne({ email })
-    .select("+password")
+    .select('+password')
     .then((user) => {
       if (!user) {
-        return res.status(401).send({
-          message: "Incorrect email or password.",
-        });
+        return next(createError(401, 'Incorrect email or password.'));
       }
 
       return bcrypt.compare(password, user.password).then((isMatch) => {
         if (!isMatch) {
-          return res.status(401).send({
-            message: "Incorrect email or password.",
-          });
+          return next(createError(401, 'Incorrect email or password.'));
         }
 
-        const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET, {
-          expiresIn: "7d",
+        const token = jwt.sign({ _id: user._id }, jwtSecret, {
+          expiresIn: '7d',
         });
 
         return res.send({ token });
       });
     })
-    .catch((err) => {
-      console.error(err);
-
-      return res.status(500).send({
-        message: "An error occurred while signing in.",
-      });
-    });
+    .catch(next);
 }
 
-function getCurrentUser(req, res) {
+function getCurrentUser(req, res, next) {
   User.findById(req.user._id)
     .then((user) => {
       if (!user) {
-        return res.status(404).send({
-          message: "User not found.",
-        });
+        return next(createError(404, 'User not found.'));
       }
 
       return res.send({
@@ -103,16 +91,10 @@ function getCurrentUser(req, res) {
         skills: user.skills,
       });
     })
-    .catch((err) => {
-      console.error(err);
-
-      return res.status(500).send({
-        message: "An error occurred while getting the user.",
-      });
-    });
+    .catch(next);
 }
 
-function updateCurrentUser(req, res) {
+function updateCurrentUser(req, res, next) {
   const { headline, location, skills } = req.body;
 
   User.findByIdAndUpdate(
@@ -129,9 +111,7 @@ function updateCurrentUser(req, res) {
   )
     .then((user) => {
       if (!user) {
-        return res.status(404).send({
-          message: "User not found.",
-        });
+        return next(createError(404, 'User not found.'));
       }
 
       return res.send({
@@ -145,17 +125,11 @@ function updateCurrentUser(req, res) {
       });
     })
     .catch((err) => {
-      console.error(err);
-
-      if (err.name === "ValidationError") {
-        return res.status(400).send({
-          message: "Invalid profile data.",
-        });
+      if (err.name === 'ValidationError') {
+        return next(createError(400, 'Invalid profile data.'));
       }
 
-      return res.status(500).send({
-        message: "An error occurred while updating the profile.",
-      });
+      return next(err);
     });
 }
 

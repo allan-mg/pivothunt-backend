@@ -1,9 +1,9 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 const applicationSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
+    ref: 'User',
     required: true,
   },
   jobId: {
@@ -20,16 +20,16 @@ const applicationSchema = new mongoose.Schema({
   },
   location: {
     type: String,
-    default: "",
+    default: '',
   },
   status: {
     type: String,
-    enum: ["Applied", "Interview", "Rejected", "Offer"],
-    default: "Applied",
+    enum: ['Applied', 'Interview', 'Rejected', 'Offer'],
+    default: 'Applied',
   },
   notes: {
     type: String,
-    default: "",
+    default: '',
     maxlength: 1000,
   },
   appliedAt: {
@@ -40,4 +40,4 @@ const applicationSchema = new mongoose.Schema({
 
 applicationSchema.index({ user: 1, jobId: 1 }, { unique: true });
 
-module.exports = mongoose.model("Application", applicationSchema);
+module.exports = mongoose.model('Application', applicationSchema);

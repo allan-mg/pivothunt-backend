@@ -1,12 +1,12 @@
-const mongoose = require("mongoose");
-const validator = require("validator");
+const mongoose = require('mongoose');
+const validator = require('validator');
 
 const userSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
     minlength: 2,
-    maxlength: 40,
+    maxlength: 30,
   },
 
   email: {
@@ -16,7 +16,7 @@ const userSchema = new mongoose.Schema({
     lowercase: true,
     validate: {
       validator: (value) => validator.isEmail(value),
-      message: "Invalid email address",
+      message: 'Invalid email address',
     },
   },
 
@@ -29,19 +29,19 @@ const userSchema = new mongoose.Schema({
 
   headline: {
     type: String,
-    default: "",
+    default: '',
     maxlength: 120,
   },
 
   location: {
     type: String,
-    default: "",
+    default: '',
     maxlength: 100,
   },
 
   avatar: {
     type: String,
-    default: "",
+    default: '',
   },
 
   skills: {
@@ -55,4 +55,4 @@ const userSchema = new mongoose.Schema({
   },
 });
 
-module.exports = mongoose.model("User", userSchema);
+module.exports = mongoose.model('User', userSchema);

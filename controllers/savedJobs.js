@@ -1,24 +1,24 @@
-const SavedJob = require("../models/savedJob");
+const SavedJob = require('../models/savedJob');
 
-function getSavedJobs(req, res) {
+const createError = (statusCode, message) => {
+  const error = new Error(message);
+  error.statusCode = statusCode;
+  return error;
+};
+
+function getSavedJobs(req, res, next) {
   SavedJob.find({
     user: req.user._id,
   })
     .sort({ savedAt: -1 })
-    .then((savedJobs) => {
-      res.send(savedJobs);
-    })
-    .catch((err) => {
-      console.error(err);
-
-      return res.status(500).send({
-        message: "An error occurred while getting saved jobs.",
-      });
-    });
+    .then((savedJobs) => res.send(savedJobs))
+    .catch(next);
 }
 
-function saveJob(req, res) {
-  const { jobId, title, company, location, level, description, url } = req.body;
+function saveJob(req, res, next) {
+  const {
+    jobId, title, company, location, level, description, url,
+  } = req.body;
 
   SavedJob.create({
     user: req.user._id,
@@ -30,54 +30,42 @@ function saveJob(req, res) {
     description,
     url,
   })
-    .then((savedJob) => {
-      res.status(201).send(savedJob);
-    })
+    .then((savedJob) => res.status(201).send(savedJob))
     .catch((err) => {
-      console.error(err);
-
       if (err.code === 11000) {
-        return res.status(409).send({
-          message: "This job is already saved.",
-        });
+        return next(createError(409, 'This job is already saved.'));
       }
 
-      if (err.name === "ValidationError") {
-        return res.status(400).send({
-          message: "Invalid saved job data.",
-        });
+      if (err.name === 'ValidationError') {
+        return next(createError(400, 'Invalid saved job data.'));
       }
 
-      return res.status(500).send({
-        message: "An error occurred while saving the job.",
-      });
+      return next(err);
     });
 }
 
-function deleteSavedJob(req, res) {
-  const { jobId } = req.params;
+function deleteSavedJob(req, res, next) {
+  const { savedJobId } = req.params;
 
   SavedJob.findOneAndDelete({
+    _id: savedJobId,
     user: req.user._id,
-    jobId,
   })
     .then((savedJob) => {
       if (!savedJob) {
-        return res.status(404).send({
-          message: "Saved job not found.",
-        });
+        return next(createError(404, 'Saved job not found.'));
       }
 
       return res.send({
-        message: "Saved job deleted successfully.",
+        message: 'Saved job deleted successfully.',
       });
     })
     .catch((err) => {
-      console.error(err);
+      if (err.name === 'CastError') {
+        return next(createError(400, 'Invalid saved job ID.'));
+      }
 
-      return res.status(500).send({
-        message: "An error occurred while deleting the saved job.",
-      });
+      return next(err);
     });
 }
 

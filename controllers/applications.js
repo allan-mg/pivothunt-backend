@@ -1,7 +1,15 @@
-const Application = require("../models/application");
+const Application = require('../models/application');
 
-function createApplication(req, res) {
-  const { jobId, jobTitle, company, location, notes } = req.body;
+const createError = (statusCode, message) => {
+  const error = new Error(message);
+  error.statusCode = statusCode;
+  return error;
+};
+
+function createApplication(req, res, next) {
+  const {
+    jobId, jobTitle, company, location, notes,
+  } = req.body;
 
   Application.findOne({
     user: req.user._id,
@@ -9,11 +17,7 @@ function createApplication(req, res) {
   })
     .then((existingApplication) => {
       if (existingApplication) {
-        res.status(409).send({
-          message: "You have already applied to this job.",
-        });
-
-        return null;
+        return next(createError(409, 'You have already applied to this job.'));
       }
 
       return Application.create({
@@ -33,44 +37,28 @@ function createApplication(req, res) {
       return res.status(201).send(application);
     })
     .catch((err) => {
-      console.error(err);
-
       if (err.code === 11000) {
-        return res.status(409).send({
-          message: "You have already applied to this job.",
-        });
+        return next(createError(409, 'You have already applied to this job.'));
       }
 
-      if (err.name === "ValidationError") {
-        return res.status(400).send({
-          message: "Invalid application data.",
-        });
+      if (err.name === 'ValidationError') {
+        return next(createError(400, 'Invalid application data.'));
       }
 
-      return res.status(500).send({
-        message: "An error occurred while creating the application.",
-      });
+      return next(err);
     });
 }
 
-function getApplications(req, res) {
+function getApplications(req, res, next) {
   Application.find({
     user: req.user._id,
   })
     .sort({ appliedAt: -1 })
-    .then((applications) => {
-      res.send(applications);
-    })
-    .catch((err) => {
-      console.error(err);
-
-      return res.status(500).send({
-        message: "An error occurred while getting applications.",
-      });
-    });
+    .then((applications) => res.send(applications))
+    .catch(next);
 }
 
-function updateApplicationStatus(req, res) {
+function updateApplicationStatus(req, res, next) {
   const { applicationId } = req.params;
   const { status } = req.body;
 
@@ -89,29 +77,21 @@ function updateApplicationStatus(req, res) {
   )
     .then((application) => {
       if (!application) {
-        return res.status(404).send({
-          message: "Application not found.",
-        });
+        return next(createError(404, 'Application not found.'));
       }
 
       return res.send(application);
     })
     .catch((err) => {
-      console.error(err);
-
-      if (err.name === "ValidationError") {
-        return res.status(400).send({
-          message: "Invalid application status.",
-        });
+      if (err.name === 'ValidationError') {
+        return next(createError(400, 'Invalid application status.'));
       }
 
-      return res.status(500).send({
-        message: "An error occurred while updating the application.",
-      });
+      return next(err);
     });
 }
 
-function updateApplicationNotes(req, res) {
+function updateApplicationNotes(req, res, next) {
   const { applicationId } = req.params;
   const { notes } = req.body;
 
@@ -130,29 +110,21 @@ function updateApplicationNotes(req, res) {
   )
     .then((application) => {
       if (!application) {
-        return res.status(404).send({
-          message: "Application not found.",
-        });
+        return next(createError(404, 'Application not found.'));
       }
 
       return res.send(application);
     })
     .catch((err) => {
-      console.error(err);
-
-      if (err.name === "ValidationError") {
-        return res.status(400).send({
-          message: "Invalid application notes.",
-        });
+      if (err.name === 'ValidationError') {
+        return next(createError(400, 'Invalid application notes.'));
       }
 
-      return res.status(500).send({
-        message: "An error occurred while updating application notes.",
-      });
+      return next(err);
     });
 }
 
-function deleteApplication(req, res) {
+function deleteApplication(req, res, next) {
   const { applicationId } = req.params;
 
   Application.findOneAndDelete({
@@ -161,22 +133,14 @@ function deleteApplication(req, res) {
   })
     .then((application) => {
       if (!application) {
-        return res.status(404).send({
-          message: "Application not found.",
-        });
+        return next(createError(404, 'Application not found.'));
       }
 
       return res.send({
-        message: "Application deleted successfully.",
+        message: 'Application deleted successfully.',
       });
     })
-    .catch((err) => {
-      console.error(err);
-
-      return res.status(500).send({
-        message: "An error occurred while deleting the application.",
-      });
-    });
+    .catch(next);
 }
 
 module.exports = {

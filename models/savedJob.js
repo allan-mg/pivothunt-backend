@@ -1,9 +1,9 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 const savedJobSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
+    ref: 'User',
     required: true,
   },
   jobId: {
@@ -20,19 +20,19 @@ const savedJobSchema = new mongoose.Schema({
   },
   location: {
     type: String,
-    default: "",
+    default: '',
   },
   level: {
     type: String,
-    default: "",
+    default: '',
   },
   description: {
     type: String,
-    default: "",
+    default: '',
   },
   url: {
     type: String,
-    default: "",
+    default: '',
   },
   savedAt: {
     type: Date,
@@ -42,4 +42,4 @@ const savedJobSchema = new mongoose.Schema({
 
 savedJobSchema.index({ user: 1, jobId: 1 }, { unique: true });
 
-module.exports = mongoose.model("SavedJob", savedJobSchema);
+module.exports = mongoose.model('SavedJob', savedJobSchema);
